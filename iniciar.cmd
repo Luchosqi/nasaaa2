@@ -8,5 +8,5 @@ if not defined NASA_NODE (
   echo No se encontro Node.js. Instala Node.js para ejecutar este servidor.
   exit /b 1
 )
-"%NASA_NODE%" "%~dp0tools\serve.cjs" "%~1"
+"%NASA_NODE%" "%~dp0tools\serve.cjs" %*
 exit /b %errorlevel%

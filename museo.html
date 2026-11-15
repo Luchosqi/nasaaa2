@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Museum QR Cards</title>
+<meta name="description" content="Printable QR cards: each one opens a mission of Abandoned but not Forgotten on a phone or tablet.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Public+Sans:wght@300;400;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "qrcode-generator": "https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/+esm"
+} }
+</script>
+<style>
+:root{--ink:#0d1526;--dim:#55607a;--line:#cfd6e4;--paper:#fff;--blue:#0B3D91;--red:#FC3D21}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#eef1f6;color:var(--ink);font-family:'Public Sans',Helvetica,Arial,sans-serif;padding:24px 16px 48px}
+.setup{max-width:980px;margin:0 auto 24px;background:var(--paper);border:1px solid var(--line);border-top:4px solid var(--blue);border-radius:10px;padding:20px}
+h1{font:800 24px/1.2 'Inter',sans-serif;margin-bottom:6px}
+.setup p{color:var(--dim);font-size:14px;line-height:1.55;max-width:70ch}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin-top:16px}
+label{display:grid;gap:6px;font:500 11px 'DM Mono',monospace;letter-spacing:.08em;color:var(--dim);text-transform:uppercase}
+input[type=url]{width:min(460px,80vw);padding:10px 12px;border:1px solid var(--line);border-radius:6px;font:14px 'DM Mono',monospace}
+select,button{padding:10px 14px;border:1px solid var(--line);border-radius:6px;background:#fff;font:500 13px 'DM Mono',monospace;cursor:pointer}
+button.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.tip{margin-top:14px;font-size:13px;color:var(--dim)}
+.tip code{font:12px 'DM Mono',monospace;background:#f2f4f8;padding:2px 5px;border-radius:4px}
+.grid{max-width:980px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.card{background:var(--paper);border:1px solid var(--line);border-top:6px solid var(--c);border-radius:10px;padding:18px;display:grid;grid-template-columns:1fr 128px;gap:14px;break-inside:avoid;page-break-inside:avoid}
+.card .tag{font:500 10px 'DM Mono',monospace;letter-spacing:.12em;color:var(--dim);text-transform:uppercase}
+.card h2{font:800 22px/1.15 'Inter',sans-serif;margin:6px 0 2px}
+.card .year{font:700 13px 'DM Mono',monospace;color:var(--c);filter:brightness(.75)}
+.card p{font-size:13px;line-height:1.5;margin-top:10px}
+.card canvas{width:128px;height:128px;image-rendering:pixelated}
+.card .scan{grid-column:2;text-align:center;font:10px 'DM Mono',monospace;color:var(--dim);margin-top:-8px}
+.card .url{grid-column:1/-1;font:10px 'DM Mono',monospace;color:var(--dim);word-break:break-all;border-top:1px dashed var(--line);padding-top:8px}
+@media print{
+  body{background:#fff;padding:0}.setup{display:none}
+  .grid{grid-template-columns:1fr 1fr;gap:10mm;max-width:none}
+  .card{border-width:1px;border-top-width:6px}
+  @page{size:A4;margin:12mm}
+}
+</style>
+</head>
+<body>
+<section class="setup">
+  <h1>Museum QR cards</h1>
+  <p>Print these cards and place them around a room. Each QR code opens one mission directly on a phone or tablet. With the local server in LAN mode, it works without internet: the phones only need to join the same Wi-Fi network as the computer serving the site.</p>
+  <div class="row">
+    <label>Site address<input type="url" id="base" spellcheck="false"></label>
+    <label>Pace<select id="pace"><option value="step">Step by step</option><option value="auto">Automatic</option></select></label>
+    <button class="primary" id="print" type="button">Print cards</button>
+  </div>
+  <p class="tip">Offline room: run <code>node tools/serve.cjs --lan</code> (or <code>iniciar.cmd --lan</code>) and open this page from the network address it prints, so the codes point at that computer. Online: use the published address.</p>
+</section>
+<main class="grid" id="grid" aria-label="Mission cards"></main>
+<script type="module">
+import qrcode from 'qrcode-generator';
+import { MISSIONS } from './src/missions.js';
+
+const $ = (id) => document.getElementById(id);
+const here = new URL('./', location.href).href;
+let saved = {};
+try { saved = JSON.parse(localStorage.getItem('abnf-museum') || '{}'); } catch { /* storage blocked */ }
+$('base').value = saved.base || here;
+$('pace').value = saved.pace || 'step';
+
+function draw(canvas, text) {
+  const qr = qrcode(0, 'M'); qr.addData(text); qr.make();
+  const n = qr.getModuleCount(), quiet = 2, size = n + quiet * 2, scale = 8;
+  canvas.width = canvas.height = size * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = '#000';
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) ctx.fillRect((c + quiet) * scale, (r + quiet) * scale, scale, scale);
+}
+
+function render() {
+  let base = $('base').value.trim() || here;
+  if (!base.endsWith('/')) base += '/';
+  try { localStorage.setItem('abnf-museum', JSON.stringify({ base, pace: $('pace').value })); } catch { /* ignore */ }
+  const grid = $('grid'); grid.textContent = '';
+  for (const m of MISSIONS) {
+    const url = `${base}?go=${m.id}&pace=${$('pace').value}`;
+    const card = document.createElement('article'); card.className = 'card'; card.style.setProperty('--c', m.color);
+    const text = document.createElement('div');
+    const tag = document.createElement('div'); tag.className = 'tag'; tag.textContent = `${m.dest} · ${m.site}`;
+    const h = document.createElement('h2'); h.textContent = m.name;
+    const y = document.createElement('div'); y.className = 'year'; y.textContent = m.year;
+    const p = document.createElement('p'); p.textContent = m.card?.fun || m.chapters?.[0]?.[2] || '';
+    text.append(tag, h, y, p);
+    const canvas = document.createElement('canvas'); canvas.setAttribute('role', 'img'); canvas.setAttribute('aria-label', `QR code for ${m.name}`);
+    draw(canvas, url);
+    const scan = document.createElement('div'); scan.className = 'scan'; scan.textContent = 'Scan to explore';
+    const u = document.createElement('div'); u.className = 'url'; u.textContent = url;
+    card.append(text, canvas, document.createElement('span'), scan, u);
+    grid.append(card);
+  }
+}
+$('base').addEventListener('change', render);
+$('pace').addEventListener('change', render);
+$('print').onclick = () => window.print();
+render();
+</script>
+</body>
+</html>

@@ -62,3 +62,11 @@ Sojourner 10.6 kg (NASA figure); Eagle's fuel line rewritten as Mission Control'
 Historical replay now starts on arrival for Eagle, Sojourner, Opportunity and Ingenuity. Includes descent/staging, airbag landing and deployment, rover driving, Perseverance sky crane and Ingenuity first flight. Pause/resume, replay, resting-site and orbit controls are provided on screen and as world-space VR panels. The spectator camera does not move automatically. Voyager is unchanged.
 
 See MOTION_SOURCES.md for source trails and the intentionally illustrative geometry, terrain, routes and timing. New files: src/playback.js, src/surface-motion.js and src/motion-controls.js. Test scene timing with ?go=<id>&motion=<seconds>. Headset validation remains pending.
+
+## Reviewer feedback round (2026-11-15)
+- **Legibility**: every text panel has a dark backing (`plate()` / `textShadow()` in `src/ui.js`); flight text draws above the models.
+- **Pace**: Automatic or Step by step (start screen, top bar, hub button in VR, `P` key, `?pace=step|auto`; remembered per browser). Step mode holds before each launch event, each cruise chapter, arrival, and each stage of the surface reconstruction (`src/pace.js`, `src/playback.js`).
+- **Extended reading**: "Read more on NASA.gov" on every arrival, with checked NASA / NSSDCA / ALSJ links and a QR to continue on a phone; a QR card in VR (`src/read-more.js`).
+- **Offline museum**: `museo.html` prints one QR card per mission. `node tools/offline-pack.mjs` (once, with internet) copies three.js, the QR library and the fonts into `vendor/`; `node tools/serve.cjs --lan` (or `iniciar.cmd --lan`) then serves phones on the same Wi-Fi with no internet. In offline mode WebXR controller/hand models (fetched from a CDN by three.js) are not available; the experience itself works. Phones and tablets load the 4K sky.
+- **Ingenuity**: Perseverance now drives nose-first.
+- Competition logos: still to check against the hackathon rules (team decision).

@@ -96,7 +96,10 @@ function tex(url, srgb = true) {
 }
 const glb = (url) => new Promise((res, rej) => gltf.load(url, (g) => res(g.scene), undefined, rej));
 
-const bigSky = renderer.capabilities.maxTextureSize >= 8192;
+// Phones and tablets get the 4K sky: the 8K one needs ~128 MB of GPU memory once decoded.
+const UA = navigator.userAgent;
+const handheld = (/Android|iPhone|iPad|Mobile/i.test(UA) || (/Macintosh/.test(UA) && navigator.maxTouchPoints > 1)) && !/OculusBrowser|Quest|Pico/i.test(UA);
+const bigSky = !handheld && renderer.capabilities.maxTextureSize >= 8192;
 const T = 'assets/tex/';
 const [starTex, day, night, clouds, moonT, moonN, marsT, sunT, mercT, venT, jupT, satT, satRing, uraT, nepT, eagleM, oppM, ingM, voyM, nearM, insightM] = await Promise.all([
   tex(bigSky ? 'assets/sky/starmap_8k.jpg' : 'assets/sky/starmap_4k.jpg'),
