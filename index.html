@@ -33,7 +33,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
 .credit{position:fixed;right:16px;bottom:12px;z-index:5;color:#5f6a80;font:400 10px 'DM Mono',monospace;letter-spacing:.06em}
 .credit a{color:inherit}
 body.in-vr .credit,body.in-vr .mute{display:none}
-.mute{position:fixed;right:16px;top:14px;z-index:6;padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:rgba(4,10,26,.6);color:var(--ink);font:500 11px 'DM Mono',monospace;letter-spacing:.14em;cursor:pointer}
+.topbar{position:fixed;right:16px;top:14px;z-index:6;display:flex;gap:8px}
+body.in-vr .topbar{display:none}
+.mute{padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:rgba(4,10,26,.6);color:var(--ink);font:500 11px 'DM Mono',monospace;letter-spacing:.14em;cursor:pointer}
+.pace-pick{display:flex;gap:8px;justify-content:center;align-items:center;margin-top:16px;color:var(--dim);font:400 11px 'DM Mono',monospace;letter-spacing:.12em}
+.pace-pick button{padding:7px 12px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--dim);font:500 11px 'DM Mono',monospace;letter-spacing:.12em;cursor:pointer}
+.pace-pick button[aria-pressed="true"]{background:var(--nasa-blue);border-color:#6682ac;color:#fff}
 .mute:hover{background:var(--nasa-red);border-color:var(--nasa-red)}
 </style>
 <script type="importmap">
@@ -55,11 +60,12 @@ body.in-vr .credit,body.in-vr .mute{display:none}
       <button class="btn" id="begin">Begin on screen</button>
       <span id="vrslot"></span>
     </div>
+    <div class="pace-pick" role="group" aria-label="Pace"><span>PACE</span><button type="button" data-pace="auto">Automatic</button><button type="button" data-pace="step">Step by step</button></div>
     <div class="note">Works in any WebXR headset (Meta Quest, Pico, Vive, Index, Vision Pro…).<br>Open this page in the headset’s browser and press ENTER VR.</div>
     <div class="disc" id="disc"></div>
   </div>
 </div>
-<button id="mute" class="mute">SOUND ON</button>
+<div class="topbar"><button id="pace" class="mute" title="Automatic or step by step (P)">PACE: AUTO</button><button id="mute" class="mute">SOUND ON</button></div>
 <div class="credit">Made with NASA data · Sky, Moon, models: NASA · Mars &amp; Earth textures: Solar System Scope (CC BY 4.0) · Not endorsed by NASA · <a href="CREDITS.md">credits</a></div>
 <script type="module" src="src/main.js"></script>
 </body>

@@ -16,7 +16,7 @@ export function createMotionControls(motion, name, onHome) {
       #motion-progress{width:100%;height:3px;display:block;accent-color:#FC3D21;margin:12px 0}
       #motion-panel .motion-actions{display:flex;gap:8px;flex-wrap:wrap}
       #motion-panel button{padding:9px 12px;min-height:40px;background:#122449;border:1px solid #6682ac;border-radius:6px;color:#fff;cursor:pointer;font:12px 'DM Mono',monospace}
-      #motion-panel button:hover{background:#0B3D91}#motion-panel button:focus-visible{outline:2px solid white;outline-offset:3px}#motion-panel button:disabled{opacity:.4;cursor:default}
+      #motion-panel button:hover{background:#0B3D91}#motion-panel button:focus-visible{outline:2px solid white;outline-offset:3px}#motion-panel button:disabled{opacity:.4;cursor:default}#motion-panel button.wait{background:#FC3D21;border-color:#FC3D21}
       @media(max-width:750px){#motion-panel,#motion-panel[data-active="false"]{top:52px;left:14px;right:auto;width:calc(100vw - 28px);padding:10px 12px}#motion-caption{font-size:12px;min-height:0;margin:6px 0}#motion-panel .motion-heading{font-size:9px}#motion-panel button{padding:8px;font-size:10px}#motion-panel .motion-note{font-size:9px}#motion-progress{margin:7px 0}}
     `;
     document.head.appendChild(style);
@@ -43,8 +43,8 @@ export function createMotionControls(motion, name, onHome) {
       root.visible = xr && visible; dom.hidden = !visible || xr;
       const s = motion.state, caption = s.caption;
       if (caption !== previous) { previous = caption; get('caption').textContent = caption; panel.set({ caption }); }
-      const pause = s.playing ? 'Pause' : s.active ? 'Resume' : 'Finished';
-      if (pause !== previousPause) { previousPause = pause; get('pause').textContent = pause; actions[0].set({ label: pause.toUpperCase() }); }
+      const pause = s.playing ? 'Pause' : s.active ? (s.step ? 'Next step ▸' : 'Resume') : 'Finished';
+      if (pause !== previousPause) { previousPause = pause; get('pause').textContent = pause; get('pause').classList.toggle('wait', s.active && !s.playing && s.step); actions[0].set({ label: pause.toUpperCase() }); }
       get('pause').disabled = !s.active; get('finish').disabled = !s.active;
       get('title').textContent = name.toUpperCase() + (s.active ? ' · HISTORY' : ' · RESTING SITE');
       get('time').textContent = Math.floor(s.time) + ' / ' + s.duration + ' s';

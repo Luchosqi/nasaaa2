@@ -386,6 +386,8 @@ export function buildLaunch(mission, vehicle) {
       L.done = t >= spec.duration;
       L.t = t;
     },
+    /** time of the next captioned event (or the end), so step mode can hold just before it */
+    nextEventT() { return nextEvent < spec.events.length ? spec.events[nextEvent].t : spec.duration; },
     /** current active stack (not yet separated) — for camera framing */
     activeBox() {
       const box = new THREE.Box3();

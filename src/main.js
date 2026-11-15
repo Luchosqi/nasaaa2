@@ -18,6 +18,7 @@ import { buildVehicle, updateVehicle } from './vehicles.js';
 import { buildLaunch } from './rockets.js';
 import { createSolarMarkers } from './solar.js';
 import { BRAND } from './brand.js';
+import { pace } from './pace.js';
 import { createSpace, R_EARTH, R_MOON, R_MARS } from './space.js';
 import { createSurface } from './surface.js';
 import { createMotionControls } from './motion-controls.js';
@@ -210,6 +211,8 @@ const hubHelp = new Panel(1.3, 0.12, (ctx, w, h) => {
   ctx.fillText('VR: point + trigger (or pinch)  ·  Screen: click, drag to look  ·  M: sound', w / 2, h / 2);
 });
 hubHelp.position.set(0, 0.88, -2.3); hubHelp.rotation.x = -0.35; hub.add(hubHelp);
+const paceBtn = button('PACE: ' + pace.label(), 0.56, 0.075, THEME.red, () => pace.toggle());
+paceBtn.position.set(0, 0.76, -2.26); paceBtn.rotation.x = -0.35; hub.add(paceBtn);
 
 // ------------------------------------------------------------------ flight UI: big story text on the sides
 const flight = new THREE.Group(); flight.visible = false; uiRoot.add(flight);
@@ -256,7 +259,7 @@ function showChapter(i) {
 const hud = new Panel(1.25, 0.24, (ctx, w, h, s) => {
   if (!cur) return;
   ctx.clearRect(0, 0, w, h);
-  plate(ctx, 4, 0, w - 8, h, 26, 0.8);
+  plate(ctx, 4, 0, w - 8, h, 26, 0.9);
   ctx.textBaseline = 'top';
   ctx.fillStyle = THEME.ink; ctx.font = `700 ${h * 0.14}px ${FONT}`; ctx.textAlign = 'center'; ctx.letterSpacing = '8px';
   ctx.fillText(s.title || (cur.name + '  →  ' + cur.dest).toUpperCase(), w / 2, 6); ctx.letterSpacing = '0px';
@@ -274,6 +277,22 @@ const hud = new Panel(1.25, 0.24, (ctx, w, h, s) => {
 hud.position.set(0, 1.0, -1.9); hud.rotation.x = -0.45; flight.add(hud);
 const skipBtn = button('SKIP ▸▸', 0.3, 0.075, THEME.red, () => skipFlight());
 skipBtn.position.set(0, 0.82, -1.8); skipBtn.rotation.x = -0.45; flight.add(skipBtn);
+const nextBtn = button('NEXT ▸', 0.3, 0.075, THEME.red, () => stepNext());
+nextBtn.position.set(-0.17, 0.82, -1.8); nextBtn.rotation.x = -0.45; nextBtn.visible = false; flight.add(nextBtn);
+// Step-by-step pace: the NEXT button sits left of SKIP during the launch and the cruise.
+function syncPaceUI() {
+  const on = pace.step && (phase === 'ascent' || phase === 'cruise');
+  nextBtn.visible = on; skipBtn.position.x = on ? 0.17 : 0;
+  paceBtn.set({ label: 'PACE: ' + pace.label() });
+  const el = $('pace'); if (el) el.textContent = 'PACE: ' + (pace.step ? 'STEPS' : 'AUTO');
+  document.querySelectorAll('[data-pace]').forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.pace === 'step') === pace.step)));
+}
+pace.onChange((step) => {
+  if (step && launchCtl) ascentGate = -1;
+  if (step && phase === 'cruise' && flightPlan) flightPlan.limit = nextCruiseStop();
+  surface?.motion?.setStep?.(step);
+  syncPaceUI();
+});
 
 // launch event captions (top centre)
 const caption = new Panel(1.4, 0.13, (ctx, w, h, s) => {
@@ -397,7 +416,7 @@ const ray = new THREE.Raycaster();
 const pointerNDC = new THREE.Vector2(9, 9);
 let interactive = [];
 function setInteractive(list) { interactive = list.filter(Boolean); }
-setInteractive(cards);
+setInteractive([...cards, paceBtn]);
 
 const controllers = [];
 const ctrlFactory = new XRControllerModelFactory();
@@ -442,7 +461,7 @@ function onSelect(src) {
   if (h && h.panel) return h.panel.onSelect && h.panel.onSelect();
   if (h && h.equipment) return discovery.show();
   if (h && h.ground && phase === 'surface') return teleport(h.ground);
-  if (phase === 'cruise') nextChapter();
+  if (phase === 'cruise' || (phase === 'ascent' && pace.step)) stepNext();
 }
 
 let drag = null;
@@ -462,11 +481,15 @@ addEventListener('keydown', (e) => {
   if (e.code === 'KeyE' && phase === 'surface' && !busy && !e.repeat) { e.preventDefault(); discovery?.show(); return; }
   if (e.target.closest?.('button,a')) return;
   keys[e.code] = true;
-  if ((e.code === 'Space' || e.code === 'Enter') && phase === 'cruise') nextChapter();
+  if ((e.code === 'Space' || e.code === 'Enter') && (phase === 'cruise' || (phase === 'ascent' && pace.step))) stepNext();
+  if ((e.code === 'Space' || e.code === 'Enter') && phase === 'surface' && surface?.motion) { const st = surface.motion.state; if (st.step && st.active && !st.playing) surface.motion.pause(); }
+  if (e.code === 'KeyP' && !e.repeat) pace.toggle();
   if (e.code === 'KeyM') { const m = toggleMute(); $('mute').textContent = m ? 'SOUND OFF' : 'SOUND ON'; }
   if (e.code === 'Escape' && (phase === 'surface' || phase === 'cruise' || phase === 'ascent' || phase === 'tripHere')) goHome();
 });
 addEventListener('keyup', (e) => { keys[e.code] = false; });
+if ($('pace')) $('pace').onclick = () => pace.toggle();
+document.querySelectorAll('[data-pace]').forEach((b) => { b.onclick = () => pace.set(b.dataset.pace === 'step'); });
 $('mute').onclick = () => { initAudio(); const m = toggleMute(); $('mute').textContent = m ? 'SOUND OFF' : 'SOUND ON'; };
 
 function teleport(p) {
@@ -477,7 +500,7 @@ function teleport(p) {
 
 // ------------------------------------------------------------------ the story state machine
 let phase = 'hub', phaseT = 0, sel = -1, busy = false;
-let flightPlan = null, vehicle = null, launchCtl = null, ascentRoot = null;
+let flightPlan = null, vehicle = null, launchCtl = null, ascentRoot = null, ascentGate = 0;
 const fill = new THREE.DirectionalLight(0xc8d4ff, 0); fill.position.set(0.3, 0.6, 1); camera.add(fill); camera.add(fill.target); fill.target.position.set(0, 0, -1);
 function dropVehicle() { if (vehicle && vehicle.parent) vehicle.parent.remove(vehicle); vehicle = null; }
 function dropAscent() { if (ascentRoot) { uiRoot.remove(ascentRoot); ascentRoot = null; } launchCtl = null; }
@@ -525,8 +548,9 @@ function startAscent() {
   flight.visible = true; hud.visible = true; skipBtn.visible = true; caption.visible = true;
   showChapter(0);
   hud.set({ p: 0, title: `${m.name} · ${launchCtl.spec.name}`.toUpperCase(), left: m.id === 'insight' ? 'LAUNCH · VANDENBERG, CALIFORNIA' : 'LAUNCH · CAPE CANAVERAL, FLORIDA', right: fmtDate(date), clock: '' });
-  setInteractive([skipBtn]);
-  phase = 'ascent'; phaseT = 0;
+  setInteractive([skipBtn, nextBtn]);
+  ascentGate = 0;
+  phase = 'ascent'; phaseT = 0; syncPaceUI();
 }
 
 /** Under a blink: turn the universe so the destination is straight ahead and start the long cruise. */
@@ -556,6 +580,7 @@ function startCruise() {
   space.setFrame(q);
   const n = m.chapters.length;
   Object.assign(flightPlan, { dir, D0, from: obs.clone(), dest, T: Math.max(30, (n - 1) * 7.5), t: 0, hold: 0 });
+  flightPlan.limit = nextCruiseStop();
   flightPlan.offset = (m.body === 'moon' || m.body === 'mars') ? V3(0, 1, 0).applyQuaternion(q.clone().invert()).multiplyScalar((m.body === 'moon' ? R_MOON : R_MARS) * 1.1) : null;
   u.home = V3(u.distance * 0.36, EYE - u.distance * 0.24, -u.distance);   // below the story text, beside the HUD
   space.update(0, 0);
@@ -564,12 +589,24 @@ function startCruise() {
   vehicle.position.copy(u.home); vehicle.quaternion.identity();
   uiRoot.add(vehicle);
   showChapter(1);
-  phase = 'cruise'; phaseT = 0;
+  phase = 'cruise'; phaseT = 0; syncPaceUI();
 }
 
+/** Step mode: where the cruise holds next (just before the next chapter, then just before arrival). */
+function nextCruiseStop() {
+  const fp = flightPlan, n = cur.chapters.length, per = fp.T / (n - 1);
+  const k = Math.floor(fp.t / per + 1e-6) + 1;
+  if (k >= n - 1) return fp.t >= fp.T - 0.01 ? fp.T : fp.T - 0.005;
+  return k * per;
+}
+function stepNext() {
+  if (phase === 'ascent' && launchCtl && !busy) ascentGate = launchCtl.nextEventT();
+  else if (phase === 'cruise') nextChapter();
+}
 function nextChapter() {
   if (!cur || phase !== 'cruise') return;
   const fp = flightPlan, n = cur.chapters.length, per = fp.T / (n - 1);
+  if (pace.step) { if (fp.t < fp.limit) fp.t = fp.limit; fp.limit = nextCruiseStop(); return; }
   const nextI = Math.min(n - 2, Math.floor(fp.t / per) + 1);
   fp.t = Math.max(fp.t, nextI * per + 0.01);
 }
@@ -594,7 +631,7 @@ async function arrive() {
   enterSurface(true);
   await fadeTo(0, 0.8);
   busy = false;
-  if (surface.motion) surface.motion.play();
+  if (surface.motion) { surface.motion.setStep?.(pace.step); surface.motion.play(); }
 }
 function enterSurface(first) {
   world = surface.scene; world.add(rig); world.add(surfUI);
@@ -614,7 +651,7 @@ function enterSurface(first) {
   for (const g of gazeTargets) g.panel.onSelect = () => tripTo(g.kind);
   setInteractive([backBtn, ...(motionControls ? motionControls.interactive : []), ...(discovery ? discovery.interactive : []), ...gazeTargets.map((g) => g.panel)]);
   gaze.kind = null; gaze.t = 0;
-  phase = 'surface'; phaseT = 0;
+  phase = 'surface'; phaseT = 0; syncPaceUI();
 }
 
 async function goHome() {
@@ -634,8 +671,8 @@ async function goHome() {
   placeUI(uiRoot);
   hub.visible = true; cards.forEach((c) => { c.material.opacity = 1; c.scale.setScalar(1); c.position.copy(c.userData.base); });
   title.material.opacity = hubHelp.material.opacity = 1;
-  setInteractive(cards);
-  cur = null; sel = -1; phase = 'hub';
+  setInteractive([...cards, paceBtn]);
+  cur = null; sel = -1; phase = 'hub'; syncPaceUI();
   await fadeTo(0, 1);
   busy = false;
 }
@@ -767,10 +804,15 @@ function update(dt, t) {
   }
 
   if (phase === 'ascent' && launchCtl) {
-    launchCtl.update(dt);
+    let adv = dt, held = false;
+    if (pace.step) {
+      const lt = launchCtl.t || 0, nt = launchCtl.nextEventT();
+      if (lt + dt >= nt && ascentGate < nt) { adv = Math.max(0, nt - 0.001 - lt); held = true; }
+    }
+    launchCtl.update(adv);
     const thrust = launchCtl.thrust;
-    setRumble(thrust); setHum(0.15);
-    shake = Math.max(shake, thrust * 1.2);
+    setRumble(held ? thrust * 0.3 : thrust); setHum(0.15);
+    if (!held) shake = Math.max(shake, thrust * 1.2);
     // frame the part of the rocket that is still flying
     const box = launchCtl.activeBox();
     if (!box.isEmpty()) {
@@ -784,19 +826,20 @@ function update(dt, t) {
     // climb away from Earth along the rocket's path
     const v = 2400 + phaseT * 420;
     tmpV.copy(ROCKET_DIR).applyQuaternion(uiRoot.quaternion).applyQuaternion(space.universe.quaternion.clone().invert());
-    space.obs.addScaledVector(tmpV, v * dt);
+    if (!held) space.obs.addScaledVector(tmpV, v * dt);
     if (launchCtl.done && !busy) blinkTo(startCruise, 2.5, 2.5);
   }
 
   if (phase === 'cruise') {
     const fp = flightPlan;
-    fp.t = Math.min(fp.T, fp.t + dt);
+    fp.t = Math.min(pace.step ? fp.limit : fp.T, fp.t + dt);
+    const cruiseHeld = pace.step && fp.t >= fp.limit && fp.t < fp.T;
     const s = fp.t / fp.T;
     const pw = cur.body === 'mars' ? 5 : cur.body === 'moon' ? 3 : 2.2;
     const remaining = fp.D0 * Math.pow(1 - s, pw);
     space.obs.copy(fp.from).addScaledVector(fp.dir, fp.D0 - remaining);
     if (fp.offset) space.obs.addScaledVector(fp.offset, ease(clamp01(s * 1.3)));
-    targetWarp = smooth(0.03, 0.16, s) * (1 - smooth(0.8, 0.95, s));
+    targetWarp = cruiseHeld ? 0 : smooth(0.03, 0.16, s) * (1 - smooth(0.8, 0.95, s));
     const n = cur.chapters.length;
     showChapter(Math.min(n - 1, 1 + Math.floor(s * (n - 1) * 0.999)));
     const launchD = new Date(cur.launch), arriveD = cur.arrive ? new Date(cur.arrive) : now;
@@ -922,4 +965,5 @@ if (qi >= 0 && qp.has('fly')) {
     w();
   }
 }
-window.__app = { MISSIONS, launch, goHome, space, camera, renderer, rig, tripTo, skip: () => skipFlight(), get phase() { return phase; }, get vehicle() { return vehicle; }, get surface() { return surface; }, get launchCtl() { return launchCtl; } };
+window.__app = { MISSIONS, launch, goHome, next: () => stepNext(), space, camera, renderer, rig, tripTo, skip: () => skipFlight(), get phase() { return phase; }, get vehicle() { return vehicle; }, get surface() { return surface; }, get launchCtl() { return launchCtl; } };
+syncPaceUI();

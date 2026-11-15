@@ -8,5 +8,12 @@ p.finish();assert.equal(p.state.active,false);assert.equal(p.state.caption,'rest
 p.play();assert.equal(p.state.time,0);p.seek(8);assert.equal(p.state.playing,false);assert.equal(p.state.time,8);
 p.play();p.update(100);assert.equal(p.state.time,40);assert.equal(p.state.playing,false);assert.equal(p.state.active,false);
 p.play();p.seek(NaN);assert.equal(p.state.time,0);p.update(-9);assert.equal(p.state.time,0);
-console.log('PASS: pause/resume, replay, seek, skip, end state and invalid timing.');
 
+// step mode: starts held, plays one stage, holds when the caption changes
+const s=createPlayback(30,(t,active)=>!active?'rest':t<10?'A':t<20?'B':'C');
+s.setStep(true);s.play();assert.equal(s.state.playing,false);assert.equal(s.state.caption,'A');
+s.pause();for(let i=0;i<40;i++)s.update(0.5);assert.equal(s.state.caption,'B');assert.equal(s.state.playing,false);assert.ok(s.state.time>=10&&s.state.time<10.6);
+s.pause();for(let i=0;i<40;i++)s.update(0.5);assert.equal(s.state.caption,'C');assert.equal(s.state.playing,false);
+s.pause();for(let i=0;i<40;i++)s.update(0.5);assert.equal(s.state.active,false);assert.equal(s.state.caption,'rest');
+s.setStep(false);s.play();assert.equal(s.state.playing,true);s.update(15);assert.equal(s.state.playing,true);
+console.log('PASS: pause/resume, replay, seek, skip, end state, invalid timing and step mode.');
