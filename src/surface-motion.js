@@ -177,6 +177,8 @@ export function createSurfaceMotion(mission, out, models, buildSojourner, buildL
   } else {
     duration = 48;
     const carrier = rover(historical, true), crane = new THREE.Group(); historical.add(crane);
+    // rover() faces -Z (mast, arm, wheel roll); turn it so its nose points along +X, where it drives.
+    carrier.group.rotation.y = -Math.PI / 2;
     box(crane, [2.8, 0.4, 1.7], 0xb49b61, [0, 0, 0]);
     for (const x of [-0.8, 0.8]) {
       const tank = mesh(new THREE.CylinderGeometry(0.3, 0.3, 1.4, 16), material(0xbfc4c7), crane, x, 0.32, 0); tank.rotation.x = Math.PI / 2;

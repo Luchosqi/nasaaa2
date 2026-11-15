@@ -230,7 +230,7 @@ function sunSprite(sizeDeg, dist = 15000, warm = false) {
 export function label(title, sub, color = '#7fb2ff', w = 0.9) {
   const p = new Panel(w, w * 0.26, (ctx, W, H) => {
     ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = 'rgba(6,10,26,0.62)';
+    ctx.fillStyle = 'rgba(6,10,26,0.84)';
     ctx.beginPath(); ctx.roundRect(4, 4, W - 8, H - 8, 22); ctx.fill();
     ctx.fillStyle = color; ctx.fillRect(4, 18, 8, H - 36);
     ctx.fillStyle = '#ffffff'; ctx.font = `700 ${H * 0.3}px ${FONT}`; ctx.textBaseline = 'top';

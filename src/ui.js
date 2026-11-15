@@ -36,7 +36,7 @@ export function drawText(ctx, text, x, y, maxW, lh) {
   return y + lines.length * lh;
 }
 
-export function glass(ctx, w, h, accent, r = 28, alpha = 0.78) {
+export function glass(ctx, w, h, accent, r = 28, alpha = 0.88) {
   ctx.clearRect(0, 0, w, h);
   const g = ctx.createLinearGradient(0, 0, w, h);
   g.addColorStop(0, `rgba(11,30,72,${alpha})`);       // NASA blue, deepened for legibility in space
@@ -50,6 +50,19 @@ export function glass(ctx, w, h, accent, r = 28, alpha = 0.78) {
     ctx.fillStyle = accent;
     ctx.fillRect(r, 3, Math.min(160, w * 0.3), 6);
   }
+}
+
+// Dark rounded backing so white text stays readable over white hardware, the Sun or bright terrain.
+export function plate(ctx, x, y, w, h, r = 24, alpha = 0.78) {
+  ctx.save(); ctx.shadowColor = 'transparent';
+  ctx.fillStyle = `rgba(2,6,18,${alpha})`;
+  ctx.beginPath(); ctx.roundRect(x, y, w, h, r); ctx.fill();
+  ctx.restore();
+}
+
+// Soft dark halo around glyphs drawn after this call (second line of defence behind the plate).
+export function textShadow(ctx, blur = 10) {
+  ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = blur; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 2;
 }
 
 /**

@@ -13,7 +13,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 import { MISSIONS } from './missions.js';
-import { Panel, button, glass, drawText, hexA, FONT, MONO, BODY, THEME } from './ui.js';
+import { Panel, button, glass, plate, textShadow, drawText, hexA, FONT, MONO, BODY, THEME } from './ui.js';
 import { buildVehicle, updateVehicle } from './vehicles.js';
 import { buildLaunch } from './rockets.js';
 import { createSolarMarkers } from './solar.js';
@@ -148,14 +148,18 @@ const title = new Panel(1.8, 0.46, (ctx, w, h) => {
   ctx.clearRect(0, 0, w, h);
   const H = h; ctx.save(); ctx.translate(0, H * 0.3); h = H * 0.7;   // top 30% reserved for an approved logo
   if (logoImg) { const lh = H * 0.22, lw = lh * logoImg.width / logoImg.height; ctx.drawImage(logoImg, w / 2 - lw / 2, -H * 0.15 - lh / 2, lw, lh); }
+  plate(ctx, w * 0.04, h * 0.02, w * 0.92, h * 0.94, 36, 0.55);
+  textShadow(ctx);
   ctx.fillStyle = THEME.ink; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   ctx.font = `800 ${h * 0.24}px ${FONT}`; ctx.letterSpacing = '12px';
   ctx.fillText('ABANDONED BUT NOT FORGOTTEN', w / 2, h * 0.12);
   ctx.letterSpacing = '4px';
   ctx.fillStyle = THEME.text; ctx.font = `400 ${h * 0.13}px ${MONO}`;
   ctx.fillText('THE HARDWARE NASA LEFT ON THE MOON, ON MARS AND BEYOND', w / 2, h * 0.5);
-  ctx.fillStyle = THEME.dim; ctx.font = `400 ${h * 0.11}px ${MONO}`;
-  ctx.fillText('Choose a story · Look around: the Sun, the Moon and every planet are where they really are today', w / 2, h * 0.74);
+  const hint = 'Choose a story · Look around: the Sun, the Moon and every planet are where they really are today';
+  let fs = h * 0.11; ctx.fillStyle = THEME.text; ctx.font = `400 ${fs}px ${MONO}`;
+  while (ctx.measureText(hint).width > w * 0.88 && fs > 10) { fs -= 1; ctx.font = `400 ${fs}px ${MONO}`; }
+  ctx.fillText(hint, w / 2, h * 0.74);
   ctx.restore();
 });
 $('disc').textContent = BRAND.disclaimer;
@@ -196,7 +200,13 @@ const cards = MISSIONS.map((m, i) => {
 });
 const hubHelp = new Panel(1.3, 0.12, (ctx, w, h) => {
   ctx.clearRect(0, 0, w, h);
-  ctx.fillStyle = THEME.faint; ctx.font = `400 ${h * 0.26}px ${MONO}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const help = 'VR: point + trigger (or pinch)  ·  Screen: click, drag to look  ·  M: sound';
+  let fs = h * 0.26; ctx.font = `400 ${fs}px ${MONO}`;
+  while (ctx.measureText(help).width > w - 110 && fs > 10) { fs -= 1; ctx.font = `400 ${fs}px ${MONO}`; }
+  const tw = ctx.measureText(help).width + 70;
+  plate(ctx, (w - tw) / 2, 8, tw, h - 16, (h - 16) / 2, 0.72);
+  ctx.fillStyle = THEME.dim;
   ctx.fillText('VR: point + trigger (or pinch)  ·  Screen: click, drag to look  ·  M: sound', w / 2, h / 2);
 });
 hubHelp.position.set(0, 0.88, -2.3); hubHelp.rotation.x = -0.35; hub.add(hubHelp);
@@ -210,10 +220,8 @@ function storyPanel(side) {
     if (!cur || s.i < 0) return;
     const c = cur.chapters[s.i];
     const right = side > 0;
-    // soft backing so text reads against stars, Sun and Earth
-    const g = ctx.createLinearGradient(right ? w : 0, 0, right ? 0 : w, 0);
-    g.addColorStop(0, 'rgba(2,6,18,0.78)'); g.addColorStop(0.75, 'rgba(2,6,18,0.45)'); g.addColorStop(1, 'rgba(2,6,18,0)');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    // solid backing under all the text, so it reads against stars, the Sun, Earth and white spacecraft
+    plate(ctx, 0, 0, w, h, 28, 0.84);
     ctx.fillStyle = cur.color; ctx.fillRect(right ? w - 10 : 0, h * 0.1, 10, h * 0.8);
     const L = right ? w - 60 : 60, W = w * 0.82;
     ctx.textAlign = right ? 'right' : 'left'; ctx.textBaseline = 'top';
@@ -248,6 +256,7 @@ function showChapter(i) {
 const hud = new Panel(1.25, 0.24, (ctx, w, h, s) => {
   if (!cur) return;
   ctx.clearRect(0, 0, w, h);
+  plate(ctx, 4, 0, w - 8, h, 26, 0.8);
   ctx.textBaseline = 'top';
   ctx.fillStyle = THEME.ink; ctx.font = `700 ${h * 0.14}px ${FONT}`; ctx.textAlign = 'center'; ctx.letterSpacing = '8px';
   ctx.fillText(s.title || (cur.name + '  →  ' + cur.dest).toUpperCase(), w / 2, 6); ctx.letterSpacing = '0px';
@@ -272,11 +281,13 @@ const caption = new Panel(1.4, 0.13, (ctx, w, h, s) => {
   let fs = h * 0.34; ctx.letterSpacing = '6px'; ctx.font = `500 ${fs}px ${MONO}`;
   while (ctx.measureText(s.text).width > w - 120 && fs > 10) { fs -= 2; ctx.font = `500 ${fs}px ${MONO}`; }
   const tw = ctx.measureText(s.text).width + 90;
-  ctx.fillStyle = 'rgba(2,6,18,0.72)'; ctx.beginPath(); ctx.roundRect((w - tw) / 2, 6, tw, h - 12, 12); ctx.fill();
+  ctx.fillStyle = 'rgba(2,6,18,0.88)'; ctx.beginPath(); ctx.roundRect((w - tw) / 2, 6, tw, h - 12, 12); ctx.fill();
   ctx.fillStyle = THEME.red; ctx.fillRect((w - tw) / 2, 6, 10, h - 12);
   ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(s.text, w / 2 + 6, h / 2 + 2);
 }, { state: { text: '' }, renderOrder: 15 });
 caption.position.set(0, 2.25, -2.4); flight.add(caption);
+// Flight text always draws on top of the rocket and spacecraft models, never hidden behind them.
+for (const p of [storyL, storyR, hud, caption]) p.material.depthTest = false;
 
 function fmtDist(km) {
   if (km >= 1e9) return (km / 1e9).toFixed(2) + ' billion km';

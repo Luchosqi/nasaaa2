@@ -3,7 +3,7 @@
 // small to see at true size, so they are drawn ENLARGED (the label says by how much) but in the right place.
 import * as THREE from 'three';
 import { raDecToVec, eclToRaDec, julian } from './astro.js';
-import { Panel, FONT, MONO, THEME } from './ui.js';
+import { Panel, plate, FONT, MONO, THEME } from './ui.js';
 
 const D = 900;                      // drawing distance (m). Direction is all that matters for things this far away.
 const AU_KM = 1.496e8;
@@ -24,6 +24,12 @@ function tag(title, sub, note, color) {
   const p = new Panel(1.0, 0.3, (ctx, W, H) => {
     ctx.clearRect(0, 0, W, H);
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    // backing sized to the widest line, so labels read over Earth, the Sun and the Milky Way
+    ctx.font = `700 ${H * 0.27}px ${FONT}`; let bw = ctx.measureText(title).width;
+    ctx.font = `400 ${H * 0.15}px ${MONO}`; bw = Math.max(bw, ctx.measureText(sub).width);
+    if (note) { ctx.font = `400 ${H * 0.12}px ${MONO}`; bw = Math.max(bw, ctx.measureText(note).width); }
+    bw = Math.min(W - 8, bw + 60);
+    plate(ctx, (W - bw) / 2, 0, bw, note ? H * 0.88 : H * 0.7, 18, 0.66);
     ctx.fillStyle = color; ctx.fillRect(W / 2 - 40, 4, 80, 6);
     ctx.fillStyle = '#ffffff'; ctx.font = `700 ${H * 0.27}px ${FONT}`; ctx.fillText(title, W / 2, H * 0.12);
     ctx.fillStyle = THEME.dim; ctx.font = `400 ${H * 0.15}px ${MONO}`; ctx.fillText(sub, W / 2, H * 0.48);
