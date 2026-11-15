@@ -366,6 +366,7 @@ const SITES = {
   apollo15: {lat:26.13,date:'1971-07-30T22:16:29Z'},
   insight: {lat:4.5,date:'2018-11-26T19:52:59Z'},
   sojourner: { lat: 19.13, date: '1997-07-04T16:57:00Z' },
+  spirit: { lat: -14.57, date: '2010-03-22T00:00:00Z' },
   opportunity: { lat: -2.28, date: '2018-06-10T00:00:00Z' },
   ingenuity: { lat: 18.4, date: '2024-01-18T00:00:00Z' },
 };
@@ -477,13 +478,22 @@ export function createSurface(m, { tex, starTex, models }) {
     out.labels.push(addLabel(scene, '“YOGI”', 'A rock Sojourner studied', m.color, 3.0, 1.4, -3.3, 0.7));
     out.labels.push(addLabel(scene, '“BARNACLE BILL”', 'Its first rock', m.color, 1.2, 0.75, -4.6, 0.7));
     out.start.pos.set(0.6, 0, 0.4);
-  } else if (m.id === 'opportunity') {
+  } else if (m.id === 'opportunity' || m.id === 'spirit') {
     // The NASA model has a low antenna hanging ~17% below the wheels: size and sink it so the wheels touch the ground.
     const rover = fitModel(models.opportunity.clone(true), 1.5 / 0.83, 'y');
     rover.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; dustify(o); } });
     place(rover, 0, -4.5, 0.6, 0.17 * 1.5 / 0.83);
     out.discoveryTarget = rover;
-    out.labels.push(addLabel(scene, 'OPPORTUNITY', 'Its last stop, after 45.16 km', m.color, 0, 2.3, -4.5));
+    out.labels.push(addLabel(scene, m.id === 'spirit' ? 'SPIRIT' : 'OPPORTUNITY', m.id === 'spirit' ? 'Columbia Hills · 7.73 km explored' : 'Its last stop, after 45.16 km', m.color, 0, 2.3, -4.5));
+    if (m.id === 'spirit') {
+      // The 2007 deposit was found near Home Plate, not at Spirit's final position.
+      // Display an illustrative sample alongside the resting rover for storytelling.
+      const deposit = new THREE.Mesh(new THREE.CircleGeometry(0.7, 32), new THREE.MeshStandardMaterial({ color: 0xded1b6, roughness: 1, side: THREE.DoubleSide }));
+      deposit.rotation.x = -Math.PI / 2;
+      deposit.position.set(1.8, heightAt(1.8, -3.5) + 0.04, -3.5);
+      scene.add(deposit); out.artifacts.push(deposit);
+      out.labels.push(addLabel(scene, 'SILICA-RICH SOIL', 'Illustration · found near Home Plate in 2007', m.color, 1.8, 0.65, -3.5, 0.9));
+    }
     out.start.pos.set(0, 0, 0);
   } else if (m.id === 'insight') {
     const lander=fitModel(models.insight.clone(true),5.8,'max');
@@ -583,4 +593,5 @@ function buildEros(m,scene,out,models,starTex) {
   out.start.pos.set(0,0,6);out.motion=createExtraMotion(m,out,models);
   out.update=(dt,t,camera)=>{for(const f of out.updaters)f(dt,t,camera)};return out;
 }
+
 

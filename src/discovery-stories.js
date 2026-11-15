@@ -1,6 +1,10 @@
 // Short, sourced stories for click-to-discover actions. Keep the app's English UI.
 const nasa = 'https://science.nasa.gov/';
 export const DISCOVERIES = {
+  spirit: [
+    { title: 'A broken wheel uncovers a clue', text: 'In 2007, Spirit dragged a stalled wheel through soil near Home Plate and exposed a bright deposit rich in silica. Its composition suggests that water helped form it, perhaps in hot springs or volcanic steam vents.', action: 'drive', note: 'Illustrative movement and soil sample: the discovery occurred earlier and nearby, not at the rover’s final position. The deposit is evidence of past water, not proof of life.', source: 'https://science.nasa.gov/photojournal/silica-rich-soil-found-by-spirit/' },
+    { title: 'Spirit’s last signal', text: 'After becoming stuck in soft soil near Home Plate, Spirit last contacted Earth on March 22, 2010. NASA ended recovery efforts on May 25, 2011.', action: 'signal', note: 'The fading rings symbolize the rover’s final radio contact.', source: nasa + 'mission/mer-spirit/' },
+  ],
   opportunity: [
     { title: 'Clues to ancient water', text: 'Opportunity examined tiny hematite spheres nicknamed “blueberries”. These minerals provided evidence that liquid water once affected these Martian rocks.', action: 'drive', note: 'Illustrative drive during its working years; this is evidence of ancient water.', source: nasa + 'mission/mars-exploration-rovers-spirit-and-opportunity/science-highlights/' },
     { title: 'The last signal', text: 'Opportunity last contacted Earth on June 10, 2018, as a planet-wide dust storm blocked sunlight from its solar panels.', action: 'signal', note: 'The fading rings symbolize its final radio contact.', source: nasa + 'mission/mars-exploration-rovers-spirit-and-opportunity/' },

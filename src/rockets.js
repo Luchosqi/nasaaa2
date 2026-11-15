@@ -312,7 +312,7 @@ function titan3e(vehicle) {
  */
 export function buildLaunch(mission, vehicle) {
   const spec = (mission.id === 'eagle' || mission.id === 'apollo15') ? saturnV(vehicle)
-    : (mission.id === 'sojourner' || mission.id === 'near') ? delta2(vehicle, false)
+    : (mission.id === 'sojourner' || mission.id === 'near' || mission.id === 'spirit') ? delta2(vehicle, false)
       : mission.id === 'opportunity' ? delta2(vehicle, true)
         : (mission.id === 'ingenuity' || mission.id === 'insight') ? atlasV(vehicle, mission.id === 'insight') : titan3e(vehicle);
   if (mission.id === 'near') { spec.name = 'Delta II 7925-8'; spec.events.forEach(e => { e.caption = e.caption.replace('LEAVING EARTH FOR MARS', 'LEAVING EARTH FOR EROS'); }); }

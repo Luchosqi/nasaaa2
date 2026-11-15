@@ -118,7 +118,7 @@ export function buildVehicle(mission, models) {
   let g;
   if (mission.id === 'eagle' || mission.id === 'apollo15') g = apolloStack(models.eagle);
   else if (mission.id === 'sojourner') g = marsCruise(2.65, { distance: 11 });
-  else if (mission.id === 'opportunity') g = marsCruise(2.65, { distance: 11, back: 0xdad6cc });
+  else if (mission.id === 'opportunity' || mission.id === 'spirit') g = marsCruise(2.65, { distance: 11, back: 0xdad6cc });
   else if (mission.id === 'ingenuity') g = marsCruise(4.5, { distance: 17, heat: 0x7a5a3c });
   else if (mission.id === 'insight') g = marsCruise(2.65, { distance: 12 });
   else if (mission.id === 'near') g = voyagerCruise(models.near);
