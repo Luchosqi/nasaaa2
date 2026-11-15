@@ -23,6 +23,7 @@ import { createSpace, R_EARTH, R_MOON, R_MARS } from './space.js';
 import { createSurface } from './surface.js';
 import { createMotionControls } from './motion-controls.js';
 import { createDiscovery } from './discovery.js';
+import { createReadMore } from './read-more.js';
 import { raDecToVec, alignFrames } from './astro.js';
 import { initAudio, setRumble, setWarp, setHum, boom, toggleMute } from './audio.js';
 
@@ -350,11 +351,11 @@ function updateWarp(dt, amt) {
 
 // ------------------------------------------------------------------ arrival card
 const surfUI = new THREE.Group();
-let cardPanel = null, backBtn = null, motionControls = null, discovery = null;
+let cardPanel = null, backBtn = null, motionControls = null, discovery = null, readMore = null;
 function buildCard(m) {
   const c = m.card;
   cardPanel = new Panel(0.95, 1.38, (ctx, w, h) => {
-    glass(ctx, w, h, m.color, 34, 0.8);
+    glass(ctx, w, h, m.color, 34, 0.9);
     const L = 56, W = w - 112;
     ctx.textBaseline = 'top'; ctx.textAlign = 'left';
     ctx.fillStyle = m.color; ctx.font = `500 ${w * 0.03}px ${MONO}`; ctx.letterSpacing = '5px'; ctx.fillText(c.tag, L, 60); ctx.letterSpacing = '0px';
@@ -381,6 +382,9 @@ function buildCard(m) {
   backBtn = button('◂  BACK TO ORBIT', 0.5, 0.09, THEME.red, () => goHome());
   cardPanel.position.set(0, 1.5, 0); backBtn.position.set(0, 0.74, 0.02);
   const holder = new THREE.Group(); holder.add(cardPanel, backBtn);
+  readMore?.dispose();
+  readMore = createReadMore(m, inXR);
+  if (readMore) { readMore.button3d.position.set(0, 0.62, 0.02); holder.add(readMore.button3d); }
   surfUI.clear(); surfUI.add(holder);
   holder.position.set(-1.35, 0, -1.75); holder.rotation.y = 0.62;
 }
@@ -401,7 +405,7 @@ function buildTripCard(kind) {
   if (tripCard) { tripUI.remove(tripCard); tripCard.dispose(); }
   const [t1, t2, lines] = TRIP_FACTS[kind];
   tripCard = new Panel(1.1, 0.62, (ctx, w, h) => {
-    glass(ctx, w, h, kind === 'sun' ? '#ffb347' : '#5ea8ff', 30, 0.75);
+    glass(ctx, w, h, kind === 'sun' ? '#ffb347' : '#5ea8ff', 30, 0.88);
     ctx.textAlign = 'left'; ctx.textBaseline = 'top';
     ctx.fillStyle = THEME.dim; ctx.font = `500 ${h * 0.05}px ${MONO}`; ctx.letterSpacing = '6px'; ctx.fillText('FROM VOYAGER 1 · ' + t2.toUpperCase(), 50, 52); ctx.letterSpacing = '0px';
     ctx.fillStyle = '#fff'; ctx.font = `800 ${h * 0.13}px ${FONT}`; ctx.fillText(t1, 46, 96);
@@ -649,7 +653,7 @@ function enterSurface(first) {
   }
   const gazeTargets = surface.gaze || [];
   for (const g of gazeTargets) g.panel.onSelect = () => tripTo(g.kind);
-  setInteractive([backBtn, ...(motionControls ? motionControls.interactive : []), ...(discovery ? discovery.interactive : []), ...gazeTargets.map((g) => g.panel)]);
+  setInteractive([backBtn, ...(readMore ? readMore.interactive : []), ...(motionControls ? motionControls.interactive : []), ...(discovery ? discovery.interactive : []), ...gazeTargets.map((g) => g.panel)]);
   gaze.kind = null; gaze.t = 0;
   phase = 'surface'; phaseT = 0; syncPaceUI();
 }
@@ -661,6 +665,7 @@ async function goHome() {
   dropVehicle(); dropAscent();
   if (motionControls) { motionControls.dispose(); motionControls = null; }
   if (discovery) { discovery.dispose(); discovery = null; }
+  if (readMore) { readMore.dispose(); readMore = null; }
   if (surface) { surface.motion?.dispose(); surface.scene.remove(rig, surfUI); surface.scene.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); surface = null; }
   flight.visible = false; tripUI.visible = false;
   world = space.scene; world.add(rig);
