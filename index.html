@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Abandoned but not Forgotten</title>
+<meta name="description" content="Stand next to the hardware NASA left on the Moon, on Mars and in interstellar space. Works on screens and in any WebXR headset.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Public+Sans:wght@300;400;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--nasa-blue:#0B3D91;--nasa-red:#FC3D21;--ink:#fff;--text:#D6DCE8;--dim:#9AA5BB;--line:rgba(255,255,255,.22);--accent:var(--nasa-red);--bg:#000}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:'Public Sans','Helvetica Neue',Helvetica,Arial,sans-serif}
+#app canvas{position:fixed;inset:0;display:block;touch-action:none}
+#loader{position:fixed;inset:0;z-index:10;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 60%,#0b1e48 0%,#000 72%);transition:opacity 1.2s}
+#loader.gone{opacity:0;pointer-events:none}
+.box{width:min(560px,calc(100vw - 32px));text-align:center}
+.box b{display:block;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:clamp(20px,3.4vw,34px);letter-spacing:.14em;font-weight:800;line-height:1.15}
+#logo{display:block;margin:0 auto 26px;max-height:72px;max-width:220px;padding:12px}
+#logo[hidden]{display:none}
+.box p{color:var(--dim);font:400 12px/1.7 'DM Mono',monospace;letter-spacing:.12em;margin:14px 0 26px}
+.bar{height:2px;background:var(--line);position:relative;overflow:hidden;margin:0 auto 22px;width:70%}
+#loadbar{position:absolute;inset:0 auto 0 0;width:0;background:var(--accent);box-shadow:0 0 12px var(--accent);transition:width .3s}
+.btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;opacity:.25;pointer-events:none;transition:opacity .6s}
+#loader.ready .btns{opacity:1;pointer-events:auto}
+#loader.ready .bar{opacity:0;transition:opacity .6s}
+.btn,#vrbutton{position:static!important;left:auto!important;bottom:auto!important;width:auto!important;min-width:200px;padding:14px 22px!important;border:1px solid var(--line)!important;border-radius:6px!important;background:rgba(4,10,26,.7)!important;color:var(--ink)!important;font:500 13px 'DM Mono',monospace!important;letter-spacing:.18em;cursor:pointer;opacity:1!important;transition:.25s;text-transform:uppercase}
+.btn:hover,#vrbutton:hover{background:var(--nasa-red)!important;border-color:var(--nasa-red)!important}
+.btn:focus-visible,#vrbutton:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.note{margin-top:22px;color:#7a869e;font:400 11px/1.6 'DM Mono',monospace;letter-spacing:.06em}
+.disc{margin-top:14px;color:#5f6a80;font:400 10px/1.5 'Public Sans',sans-serif;max-width:520px;margin-left:auto;margin-right:auto}
+.credit{position:fixed;right:16px;bottom:12px;z-index:5;color:#5f6a80;font:400 10px 'DM Mono',monospace;letter-spacing:.06em}
+.credit a{color:inherit}
+body.in-vr .credit,body.in-vr .mute{display:none}
+.mute{position:fixed;right:16px;top:14px;z-index:6;padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:rgba(4,10,26,.6);color:var(--ink);font:500 11px 'DM Mono',monospace;letter-spacing:.14em;cursor:pointer}
+.mute:hover{background:var(--nasa-red);border-color:var(--nasa-red)}
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="app"></div>
+<div id="loader">
+  <div class="box">
+    <img id="logo" hidden alt="">
+    <b>ABANDONED BUT<br>NOT FORGOTTEN</b>
+    <p>STORIES OF THE HARDWARE NASA LEFT ON THE MOON, ON MARS AND IN INTERSTELLAR SPACE</p>
+    <div class="bar"><div id="loadbar"></div></div>
+    <div class="btns">
+      <button class="btn" id="begin">Begin on screen</button>
+      <span id="vrslot"></span>
+    </div>
+    <div class="note">Works in any WebXR headset (Meta Quest, Pico, Vive, Index, Vision Pro…).<br>Open this page in the headset’s browser and press ENTER VR.</div>
+    <div class="disc" id="disc"></div>
+  </div>
+</div>
+<button id="mute" class="mute">SOUND ON</button>
+<div class="credit">Made with NASA data · Sky, Moon, models: NASA · Mars &amp; Earth textures: Solar System Scope (CC BY 4.0) · Not endorsed by NASA · <a href="CREDITS.md">credits</a></div>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
