@@ -1,0 +1,55 @@
+# Builds the offline kit ZIP on every push to main and publishes it on the "offline-kit" release.
+# Download link (fixed): https://github.com/Luchosqi/nasaaa2/releases/download/offline-kit/abandoned-but-not-forgotten-offline.zip
+name: Offline kit
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: offline-kit
+  cancel-in-progress: true
+
+jobs:
+  kit:
+    runs-on: ubuntu-latest
+    env:
+      KIT: abandoned-but-not-forgotten-offline
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Tests
+        run: |
+          node tools/test-playback.mjs
+          for f in src/*.js sw.js tools/serve.cjs tools/offline-list.mjs; do node --check "$f"; done
+          node tools/offline-list.mjs --check
+
+      - name: Build ZIP
+        run: |
+          mkdir -p "dist/$KIT/tools"
+          cp -r index.html museo.html sw.js offline-files.json CREDITS.md LEEME-OFFLINE.txt iniciar.cmd iniciar-museo.cmd iniciar.sh src vendor assets "dist/$KIT/"
+          cp tools/serve.cjs tools/serve.ps1 "dist/$KIT/tools/"
+          chmod +x "dist/$KIT/iniciar.sh"
+          (cd dist && zip -qr9 "$KIT.zip" "$KIT")
+          ls -lh "dist/$KIT.zip"
+
+      - name: Publish release
+        run: |
+          git tag -f offline-kit
+          git push -f origin refs/tags/offline-kit
+          NOTES="Offline kit built from ${GITHUB_SHA::7} on $(date -u +%F). Unzip it and open iniciar.cmd (Windows) or iniciar.sh (Linux/Mac). See LEEME-OFFLINE.txt."
+          if gh release view offline-kit >/dev/null 2>&1; then
+            gh release upload offline-kit "dist/$KIT.zip" --clobber
+            gh release edit offline-kit --notes "$NOTES"
+          else
+            gh release create offline-kit "dist/$KIT.zip" --title "Offline kit" --notes "$NOTES" --latest
+          fi

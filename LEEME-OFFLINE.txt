@@ -1,0 +1,44 @@
+ABANDONED BUT NOT FORGOTTEN - KIT OFFLINE / OFFLINE KIT
+=========================================================
+
+ESPAÑOL
+
+Este kit funciona sin internet.
+
+1. Descomprime la carpeta completa (no la abras desde dentro del ZIP).
+2. Windows: doble clic en  iniciar.cmd
+   Linux / Mac: abre una terminal en la carpeta y ejecuta  ./iniciar.sh
+   Se abre el navegador con la experiencia. Deja la ventana negra abierta mientras la usas.
+
+Museo en sala (telefonos y tablets, sin internet):
+1. Conecta este computador y los telefonos al mismo Wi-Fi (sirve un router sin internet
+   o un punto de acceso del propio computador).
+2. Windows: clic derecho en  iniciar-museo.cmd  > "Ejecutar como administrador".
+   Linux / Mac:  ./iniciar.sh --lan
+3. La ventana muestra una direccion como  http://192.168.1.20:8642/museo.html
+   Abrela en este computador, imprime las tarjetas QR y ponlas en la sala.
+   Los estudiantes escanean un codigo y la mision se abre en su telefono.
+
+Requisitos: Windows 10/11 (no necesita instalar nada), o Linux/Mac con Node.js o Python 3.
+Navegador recomendado: Chrome, Edge o Firefox actualizados.
+En modo offline no se cargan los modelos 3D de los controles de realidad virtual;
+la experiencia funciona igual.
+
+
+ENGLISH
+
+This kit works without internet.
+
+1. Unzip the whole folder (do not run it from inside the ZIP).
+2. Windows: double-click  iniciar.cmd
+   Linux / Mac: open a terminal in the folder and run  ./iniciar.sh
+   The browser opens the experience. Keep the black window open while you use it.
+
+Classroom museum (phones and tablets, no internet):
+1. Put this computer and the phones on the same Wi-Fi (a router with no internet,
+   or a hotspot created by this computer, is enough).
+2. Windows: right-click  iniciar-museo.cmd  > "Run as administrator".
+   Linux / Mac:  ./iniciar.sh --lan
+3. The window prints an address such as  http://192.168.1.20:8642/museo.html
+   Open it on this computer, print the QR cards and place them around the room.
+   Students scan a code and the mission opens on their phone.

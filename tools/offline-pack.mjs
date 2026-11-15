@@ -1,6 +1,6 @@
-// Downloads everything the site normally takes from the internet into vendor/, so a classroom
-// computer can serve the experience with no connection (node tools/serve.cjs --lan).
-// Run once, with internet:  node tools/offline-pack.mjs
+// Refreshes vendor/: the local copies of three.js, the QR library and the web fonts that the site
+// loads instead of a CDN (so it works the same online, offline, as a PWA and from the offline kit).
+// Only needed when upgrading a dependency. Run with internet:  node tools/offline-pack.mjs
 // It only saves files; nothing downloaded is executed here.
 import { mkdir, writeFile, readFile, readdir } from 'node:fs/promises';
 import { dirname, join, posix } from 'node:path';
@@ -52,21 +52,21 @@ for (const f of ['draco_decoder.js', 'draco_decoder.wasm', 'draco_wasm_wrapper.j
 
 // 2. QR library (ES module build from jsDelivr); absolute /npm/ imports point at vendor/ too
 console.log('qrcode-generator');
-const qr = (await get(CDN + 'qrcode-generator@1.4.4/+esm')).replaceAll('"/npm/', '"/vendor/npm/').replace(/\/\/# sourceMappingURL=.*$/m, '');
-await save('npm/qrcode-generator@1.4.4/+esm', qr);
+const qr = (await get(CDN + 'qrcode-generator@1.4.4/+esm')).replace(/\/\/# sourceMappingURL=.*$/m, '');
+await save('npm/qrcode-generator@1.4.4/qrcode.esm.js', qr);   // .js so every host serves it as JavaScript
 
 // 3. Web fonts (Inter, Public Sans, DM Mono — SIL Open Font License) with a local stylesheet
 console.log('fonts');
-const html = await readFile(join(root, 'index.html'), 'utf8');
-const cssUrl = html.match(/https:\/\/fonts\.googleapis\.com\/css2\?[^"]+/)[0].replaceAll('&amp;', '&');
-let css = await get(cssUrl);
+const cssUrl = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Public+Sans:wght@300;400;600&family=DM+Mono:wght@400;500&display=swap';
+// keep only the Latin subsets (English and Spanish text)
+let css = (await get(cssUrl)).split(/(?=\/\* [a-z-]+ \*\/)/).filter((b) => /^\/\* latin(-ext)? \*\//.test(b)).join('');
 let i = 0;
 for (const m of [...css.matchAll(/url\((https:\/\/fonts\.gstatic\.com\/[^)]+)\)/g)]) {
   const name = `font-${i++}.woff2`;
   await save('fonts/' + name, await get(m[1], true));
   css = css.replace(m[1], name);
 }
-await save('fonts/fonts.css', css);
+await save('fonts/fonts.css', '/* Inter, Public Sans, DM Mono: SIL Open Font License 1.1 (Google Fonts). Latin subsets only. */\n' + css);
 
 console.log(`\nListo: ${seen.size + 3} archivos de three.js, la libreria QR y las fuentes en vendor/.`);
-console.log('Ahora: node tools/serve.cjs --lan   (o iniciar.cmd --lan)');
+console.log('Si cambiaron archivos, regenera la lista offline: node tools/offline-list.mjs');

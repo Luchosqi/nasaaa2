@@ -5,9 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Abandoned but not Forgotten</title>
 <meta name="description" content="Stand next to the hardware NASA left on the Moon, on Mars and in interstellar space. Works on screens and in any WebXR headset.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Public+Sans:wght@300;400;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="vendor/fonts/fonts.css" rel="stylesheet">
 <style>
 :root{--nasa-blue:#0B3D91;--nasa-red:#FC3D21;--ink:#fff;--text:#D6DCE8;--dim:#9AA5BB;--line:rgba(255,255,255,.22);--accent:var(--nasa-red);--bg:#000}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -39,13 +37,18 @@ body.in-vr .topbar{display:none}
 .pace-pick{display:flex;gap:8px;justify-content:center;align-items:center;margin-top:16px;color:var(--dim);font:400 11px 'DM Mono',monospace;letter-spacing:.12em}
 .pace-pick button{padding:7px 12px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--dim);font:500 11px 'DM Mono',monospace;letter-spacing:.12em;cursor:pointer}
 .pace-pick button[aria-pressed="true"]{background:var(--nasa-blue);border-color:#6682ac;color:#fff}
+.offline-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.link-btn{display:inline-block;padding:7px 12px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--text);font:500 11px 'DM Mono',monospace;letter-spacing:.1em;text-decoration:none;cursor:pointer}
+.link-btn:hover:not(:disabled){background:var(--nasa-blue);border-color:#6682ac;color:#fff}.link-btn:disabled{opacity:.7;cursor:default}.link-btn[hidden]{display:none}
+.link-btn:focus-visible,.pace-pick button:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.offline-status{min-height:16px;margin-top:8px;color:var(--dim);font:400 11px/1.5 'DM Mono',monospace}
 .mute:hover{background:var(--nasa-red);border-color:var(--nasa-red)}
 </style>
 <script type="importmap">
 { "imports": {
-  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
-  "qrcode-generator": "https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/+esm"
+  "three": "./vendor/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "./vendor/npm/three@0.170.0/examples/jsm/",
+  "qrcode-generator": "./vendor/npm/qrcode-generator@1.4.4/qrcode.esm.js"
 } }
 </script>
 </head>
@@ -62,6 +65,8 @@ body.in-vr .topbar{display:none}
       <span id="vrslot"></span>
     </div>
     <div class="pace-pick" role="group" aria-label="Pace"><span>PACE</span><button type="button" data-pace="auto">Automatic</button><button type="button" data-pace="step">Step by step</button></div>
+    <div class="offline-row"><button type="button" class="link-btn" id="save-offline" hidden>Save for offline</button><a class="link-btn" id="kit" href="#">Download offline kit (ZIP) ↓</a></div>
+    <div class="offline-status" id="offline-status" role="status" aria-live="polite"></div>
     <div class="note">Works in any WebXR headset (Meta Quest, Pico, Vive, Index, Vision Pro…).<br>Open this page in the headset’s browser and press ENTER VR.</div>
     <div class="disc" id="disc"></div>
   </div>

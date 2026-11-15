@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Museum QR Cards</title>
 <meta name="description" content="Printable QR cards: each one opens a mission of Abandoned but not Forgotten on a phone or tablet.">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Public+Sans:wght@300;400;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="vendor/fonts/fonts.css" rel="stylesheet">
 <script type="importmap">
 { "imports": {
-  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-  "qrcode-generator": "https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/+esm"
+  "three": "./vendor/npm/three@0.170.0/build/three.module.js",
+  "qrcode-generator": "./vendor/npm/qrcode-generator@1.4.4/qrcode.esm.js"
 } }
 </script>
 <style>
@@ -52,12 +52,14 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}
     <label>Pace<select id="pace"><option value="step">Step by step</option><option value="auto">Automatic</option></select></label>
     <button class="primary" id="print" type="button">Print cards</button>
   </div>
-  <p class="tip">Offline room: run <code>node tools/serve.cjs --lan</code> (or <code>iniciar.cmd --lan</code>) and open this page from the network address it prints, so the codes point at that computer. Online: use the published address.</p>
+  <p class="tip">Offline room: run <code>node tools/serve.cjs --lan</code> (or <code>iniciar.cmd --lan</code>) and open this page from the network address it prints, so the codes point at that computer. Online: use the published address. No computer with the kit yet? <a id="kit" href="#">Download the offline kit (ZIP)</a>, unzip it and double-click <code>iniciar.cmd</code> (Windows) or run <code>./iniciar.sh</code> (Linux/Mac).</p>
 </section>
 <main class="grid" id="grid" aria-label="Mission cards"></main>
 <script type="module">
 import qrcode from 'qrcode-generator';
 import { MISSIONS } from './src/missions.js';
+import { KIT_URL } from './src/site.js';
+document.getElementById('kit').href = KIT_URL;
 
 const $ = (id) => document.getElementById(id);
 const here = new URL('./', location.href).href;

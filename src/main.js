@@ -19,6 +19,8 @@ import { buildLaunch } from './rockets.js';
 import { createSolarMarkers } from './solar.js';
 import { BRAND } from './brand.js';
 import { pace } from './pace.js';
+import { handheld } from './device.js';
+import { initOffline } from './offline.js';
 import { createSpace, R_EARTH, R_MOON, R_MARS } from './space.js';
 import { createSurface } from './surface.js';
 import { createMotionControls } from './motion-controls.js';
@@ -88,7 +90,7 @@ addEventListener('resize', () => {
 const manager = new THREE.LoadingManager();
 manager.onProgress = (_u, done, total) => { $('loadbar').style.width = Math.round(done / total * 100) + '%'; };
 const texLoader = new THREE.TextureLoader(manager);
-const draco = new DRACOLoader().setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/gltf/');
+const draco = new DRACOLoader().setDecoderPath('vendor/npm/three@0.170.0/examples/jsm/libs/draco/gltf/');
 const gltf = new GLTFLoader(manager).setDRACOLoader(draco);
 const maxAniso = renderer.capabilities.getMaxAnisotropy();
 function tex(url, srgb = true) {
@@ -97,12 +99,11 @@ function tex(url, srgb = true) {
 const glb = (url) => new Promise((res, rej) => gltf.load(url, (g) => res(g.scene), undefined, rej));
 
 // Phones and tablets get the 4K sky: the 8K one needs ~128 MB of GPU memory once decoded.
-const UA = navigator.userAgent;
-const handheld = (/Android|iPhone|iPad|Mobile/i.test(UA) || (/Macintosh/.test(UA) && navigator.maxTouchPoints > 1)) && !/OculusBrowser|Quest|Pico/i.test(UA);
 const bigSky = !handheld && renderer.capabilities.maxTextureSize >= 8192;
 const T = 'assets/tex/';
 const [starTex, day, night, clouds, moonT, moonN, marsT, sunT, mercT, venT, jupT, satT, satRing, uraT, nepT, eagleM, oppM, ingM, voyM, nearM, insightM] = await Promise.all([
-  tex(bigSky ? 'assets/sky/starmap_8k.jpg' : 'assets/sky/starmap_4k.jpg'),
+  // offline copies may hold only the 4K sky: fall back to it if the 8K one cannot be loaded
+  bigSky ? tex('assets/sky/starmap_8k.jpg').catch(() => tex('assets/sky/starmap_4k.jpg')) : tex('assets/sky/starmap_4k.jpg'),
   tex(T + 'earth_day_4k.jpg'), tex(T + 'earth_night_4k.jpg'), tex(T + 'earth_clouds_4k.jpg', false),
   tex(T + 'moon_4k.jpg'), tex(T + 'moon_normal.jpg', false), tex(T + 'mars_4k.jpg'), tex(T + 'sun_2k.jpg'),
   tex(T + '2k_mercury.jpg'), tex(T + '2k_venus_atmosphere.jpg'), tex(T + '2k_jupiter.jpg'), tex(T + '2k_saturn.jpg'), tex(T + '2k_saturn_ring_alpha.png'),
@@ -975,3 +976,4 @@ if (qi >= 0 && qp.has('fly')) {
 }
 window.__app = { MISSIONS, launch, goHome, next: () => stepNext(), space, camera, renderer, rig, tripTo, skip: () => skipFlight(), get phase() { return phase; }, get vehicle() { return vehicle; }, get surface() { return surface; }, get launchCtl() { return launchCtl; } };
 syncPaceUI();
+initOffline();
