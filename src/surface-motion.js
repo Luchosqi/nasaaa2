@@ -108,7 +108,7 @@ function rover(parent, large = false) {
 
 export function createSurfaceMotion(mission, out, models, buildSojourner, buildLunarRover) {
   const id = mission.id;
-  if (!['eagle', 'apollo15', 'sojourner', 'opportunity', 'ingenuity'].includes(id)) return null;
+  if (!['eagle', 'apollo15', 'sojourner', 'spirit', 'opportunity', 'ingenuity'].includes(id)) return null;
   const historical = new THREE.Group(); historical.name = 'Historical reconstruction'; out.scene.add(historical);
   // Existing artifacts remain untouched and return at the end of the replay.
   const artifacts = out.artifacts;
@@ -144,7 +144,7 @@ export function createSurfaceMotion(mission, out, models, buildSojourner, buildL
       if (t < 22) return (id === 'apollo15' ? 'TIME JUMP · After exploring the Moon with a rover, Scott and Irwin prepare to leave.' : 'TIME JUMP · After their surface work, Armstrong and Aldrin prepare to leave on July 21.');
       return 'LIFTOFF · Only the ascent stage rises. The descent stage remains on the Moon.';
     };
-  } else if (id === 'sojourner' || id === 'opportunity') {
+  } else if (id === 'sojourner' || id === 'opportunity' || id === 'spirit') {
     duration = 40;
     const pack = airbagLander(historical), lander = petals(historical, id === 'sojourner' ? 1 : 1.7);
     const vehicle = id === 'sojourner' ? { group: buildSojourner(), radius: 0.065 } : rover(historical);
@@ -166,13 +166,13 @@ export function createSurfaceMotion(mission, out, models, buildSojourner, buildL
       if (vehicle.head) vehicle.head.rotation.y = t > 34 ? Math.sin((t - 34) * 0.8) * 0.4 : 0;
       if (vehicle.arm) vehicle.arm.rotation.x = t > 34 ? -0.5 * ease(progress(t, 34, 38)) : 0;
       cloud.set(t > 9 && t < 17 ? Math.abs(Math.sin(bounce * Math.PI * 3)) * (1 - bounce) : 0, t);
-      const name = id === 'sojourner' ? 'PATHFINDER · Ares Vallis, 1997' : 'OPPORTUNITY · Eagle Crater, 2004';
+      const name = id === 'sojourner' ? 'PATHFINDER · Ares Vallis, 1997' : id === 'spirit' ? 'SPIRIT · Gusev Crater, 2004' : 'OPPORTUNITY · Eagle Crater, 2004';
       if (t < 6) return name + ' · A parachute slows the lander in the Martian atmosphere.';
       if (t < 9) return 'FINAL DESCENT · Braking rockets slow the airbag-protected lander before release.';
       if (t < 17) return 'BOUNCE LANDING · Inflated airbags cushion repeated impacts. This short replay illustrates the sequence.';
       if (t < 23) return 'DEPLOYMENT · Airbags deflate and the lander petals open. The rover is prepared to drive off.';
       if (t < 34) return 'EXPLORATION · Wheels carry the rover away from its lander. This is an illustrative route, with accelerated motion.';
-      return id === 'sojourner' ? 'READING ROCKS · Sojourner used a spectrometer to measure the composition of rocks and soil.' : 'SCIENCE STOP · Opportunity points its cameras and lowers its instrument arm to investigate a rock.';
+      return id === 'sojourner' ? 'READING ROCKS · Sojourner used a spectrometer to measure the composition of rocks and soil.' : id === 'spirit' ? 'SCIENCE STOP · Spirit investigates rocks and soil for clues to ancient water.' : 'SCIENCE STOP · Opportunity points its cameras and lowers its instrument arm to investigate a rock.';
     };
   } else {
     duration = 48;
